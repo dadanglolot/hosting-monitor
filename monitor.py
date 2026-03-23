@@ -23,6 +23,7 @@ CONFIG = {
     ],
     "discord_webhook": os.environ.get("DISCORD_WEBHOOK", ""),
     "discord_resend_minutes": 180,
+    "notify_on_existing_alert": os.environ.get("NOTIFY_ON_EXISTING_ALERT", "false").lower() in ("1", "true", "yes"),
     "headless": os.environ.get("HEADLESS", "false").lower() in ("1", "true", "yes"),
     "check_interval": 3600,  # 1 hour in seconds
     "cpu_threshold": 90,
@@ -296,6 +297,14 @@ class HostingMonitor:
                 # Send Discord notification
                 self.send_discord_alert(node, cpu, ram, alerts, metrics.get("url", "N/A"))
             else:
+                if CONFIG["notify_on_existing_alert"]:
+                    self.log(f"[ALERT] Forced notification for existing out-of-stock node: {node}")
+                    self.send_discord_alert(node, cpu, ram, alerts, metrics.get("url", "N/A"))
+                    existing_entry["last_notified_at"] = timestamp
+                    with open(self.stock_status_file, 'w') as f:
+                        json.dump(stock_data, f, indent=2)
+                    return
+
                 # Re-notify every N minutes while still above threshold.
                 notify_at = existing_entry.get("last_notified_at") or existing_entry.get("timestamp")
                 try:
