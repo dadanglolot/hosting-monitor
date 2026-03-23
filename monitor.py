@@ -6,6 +6,7 @@ import re
 import time
 import os
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -23,6 +24,7 @@ CONFIG = {
     ],
     "discord_webhook": os.environ.get("DISCORD_WEBHOOK", ""),
     "headless": os.environ.get("HEADLESS", "false").lower() in ("1", "true", "yes"),
+    "max_workers": int(os.environ.get("MAX_WORKERS", "3")),
     "check_interval": 3600,  # 1 hour in seconds
     "cpu_threshold": 90,
     "ram_threshold": 90,
@@ -85,9 +87,6 @@ class HostingMonitor:
                 return
 
             out_count = sum(1 for item in scan_results if item["status"] == "OUT_OF_STOCK")
-            if out_count == 0:
-                self.log("No out-of-stock nodes in this scan. Skipping Discord notification.")
-                return
 
             embed = {
                 "title": "[ATBP] Node Scan Summary",
@@ -96,7 +95,7 @@ class HostingMonitor:
                     f"Out of stock: **{out_count}**\n"
                     "Rule: Out of stock is based on **average between scans**, not max."
                 ),
-                "color": 16711680,  # Red color
+                "color": 16711680 if out_count > 0 else 5763719,
                 "fields": [],
                 "timestamp": datetime.now().isoformat(),
                 "footer": {
@@ -135,6 +134,24 @@ class HostingMonitor:
         
         except Exception as e:
             self.log(f"Error sending Discord summary: {e}")
+
+    def scrape_all_parallel(self):
+        """Scrape all URLs in parallel and return successful metric results."""
+        results = []
+        max_workers = max(1, min(CONFIG["max_workers"], len(CONFIG["urls"])))
+        self.log(f"Starting parallel scraping with {max_workers} workers...")
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(self.scrape_metrics, url) for url in CONFIG["urls"]]
+            for future in as_completed(futures):
+                try:
+                    metrics = future.result()
+                    if metrics:
+                        results.append(metrics)
+                except Exception as e:
+                    self.log(f"Parallel scrape task failed: {e}")
+
+        return results
 
     def _build_driver(self):
         """Create a configured Chrome driver instance."""
@@ -391,34 +408,27 @@ class HostingMonitor:
         self.log(f"RAM threshold: {CONFIG['ram_threshold']}%")
 
         scan_results = []
-        driver = None
-        try:
-            driver = self._build_driver()
-            for url in CONFIG['urls']:
-                metrics = self.scrape_metrics_with_driver(driver, url)
+        metrics_results = self.scrape_all_parallel()
+        for metrics in metrics_results:
+            scan_record = self.build_scan_record(metrics)
+            self.save_metrics(scan_record)
+            scan_results.append(scan_record)
 
-                if metrics:
-                    scan_record = self.build_scan_record(metrics)
-                    self.save_metrics(scan_record)
-                    scan_results.append(scan_record)
+            self.log(f"Node: {scan_record['node_name']}")
+            self.log(f"CPU current/avg/max: {scan_record['cpu_current']}% / {scan_record['cpu_average_72h']}% / {scan_record['cpu_max_72h']}%")
+            self.log(f"RAM current/avg/max: {scan_record['ram_current']}% / {scan_record['ram_average_72h']}% / {scan_record['ram_max_72h']}%")
+            self.log(f"Between-scan avg CPU/RAM: {scan_record['cpu_between_scans']}% / {scan_record['ram_between_scans']}%")
 
-                    self.log(f"Node: {scan_record['node_name']}")
-                    self.log(f"CPU current/avg/max: {scan_record['cpu_current']}% / {scan_record['cpu_average_72h']}% / {scan_record['cpu_max_72h']}%")
-                    self.log(f"RAM current/avg/max: {scan_record['ram_current']}% / {scan_record['ram_average_72h']}% / {scan_record['ram_max_72h']}%")
-                    self.log(f"Between-scan avg CPU/RAM: {scan_record['cpu_between_scans']}% / {scan_record['ram_between_scans']}%")
+            if scan_record["alerts"]:
+                self.log(f"[ALERT] ALERTS: {'; '.join(scan_record['alerts'])}")
+                self.log("Status: OUT OF STOCK")
+            else:
+                self.log("Status: IN STOCK")
 
-                    if scan_record["alerts"]:
-                        self.log(f"[ALERT] ALERTS: {'; '.join(scan_record['alerts'])}")
-                        self.log("Status: OUT OF STOCK")
-                    else:
-                        self.log("Status: IN STOCK")
+            self.log("-" * 50)
 
-                    self.log("-" * 50)
-            if scan_results:
-                self.send_discord_scan_summary(scan_results)
-        finally:
-            if driver:
-                driver.quit()
+        if scan_results:
+            self.send_discord_scan_summary(scan_results)
     
     def run_continuous(self):
         """Run monitoring continuously"""
@@ -435,31 +445,24 @@ class HostingMonitor:
                 self.log(f"\n--- Check #{check_count} ---")
                 scan_results = []
 
-                driver = self._build_driver()
-                try:
-                    # Check all URLs
-                    for url in CONFIG['urls']:
-                        metrics = self.scrape_metrics_with_driver(driver, url)
-                        
-                        if metrics:
-                            scan_record = self.build_scan_record(metrics)
-                            self.save_metrics(scan_record)
-                            scan_results.append(scan_record)
-                            
-                            self.log(f"Node: {scan_record['node_name']}")
-                            self.log(f"CPU current/avg/max: {scan_record['cpu_current']}% / {scan_record['cpu_average_72h']}% / {scan_record['cpu_max_72h']}%")
-                            self.log(f"RAM current/avg/max: {scan_record['ram_current']}% / {scan_record['ram_average_72h']}% / {scan_record['ram_max_72h']}%")
-                            self.log(f"Between-scan avg CPU/RAM: {scan_record['cpu_between_scans']}% / {scan_record['ram_between_scans']}%")
-                            
-                            if scan_record["alerts"]:
-                                self.log(f"[ALERT] ALERTS: {'; '.join(scan_record['alerts'])}")
-                                self.log("Status: OUT OF STOCK")
-                            else:
-                                self.log("Status: IN STOCK")
-                            
-                            self.log("-" * 50)
-                finally:
-                    driver.quit()
+                metrics_results = self.scrape_all_parallel()
+                for metrics in metrics_results:
+                    scan_record = self.build_scan_record(metrics)
+                    self.save_metrics(scan_record)
+                    scan_results.append(scan_record)
+
+                    self.log(f"Node: {scan_record['node_name']}")
+                    self.log(f"CPU current/avg/max: {scan_record['cpu_current']}% / {scan_record['cpu_average_72h']}% / {scan_record['cpu_max_72h']}%")
+                    self.log(f"RAM current/avg/max: {scan_record['ram_current']}% / {scan_record['ram_average_72h']}% / {scan_record['ram_max_72h']}%")
+                    self.log(f"Between-scan avg CPU/RAM: {scan_record['cpu_between_scans']}% / {scan_record['ram_between_scans']}%")
+
+                    if scan_record["alerts"]:
+                        self.log(f"[ALERT] ALERTS: {'; '.join(scan_record['alerts'])}")
+                        self.log("Status: OUT OF STOCK")
+                    else:
+                        self.log("Status: IN STOCK")
+
+                    self.log("-" * 50)
 
                 if scan_results:
                     self.send_discord_scan_summary(scan_results)
