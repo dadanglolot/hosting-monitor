@@ -4,7 +4,7 @@ Automated monitoring system for ATBPHosting's HetrixTools status page to track C
 
 ## Features
 
-- ✅ **Continuous Monitoring** - Checks metrics every hour (configurable)
+- ✅ **Continuous Monitoring** - Checks metrics every 5 minutes (configurable)
 - ✅ **CPU/RAM Tracking** - Monitors max, current, and average usage over 72 hours
 - ✅ **Threshold Alerts** - Flags nodes exceeding 90% (configurable)
 - ✅ **Out of Stock Detection** - Auto-marks nodes that exceed limits
@@ -47,7 +47,7 @@ Edit `monitor.py` to change settings:
 ```python
 CONFIG = {
     "url": "https://status.atbphosting.com/report/uptime/df035459a3513ae69d3414c3e8827e36/",
-    "check_interval": 3600,  # seconds (3600 = 1 hour)
+    "check_interval": 300,   # seconds (300 = 5 minutes)
     "cpu_threshold": 90,     # percentage
     "ram_threshold": 90,     # percentage
     "data_dir": "monitoring_data",
