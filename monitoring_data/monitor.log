@@ -1,0 +1,182 @@
+[2026-03-23 14:53:31] Starting continuous monitoring...
+[2026-03-23 14:53:31] Check interval: 3600 seconds
+[2026-03-23 14:53:31] CPU threshold: 90%
+[2026-03-23 14:53:31] RAM threshold: 90%
+[2026-03-23 14:53:31] 
+--- Check #1 ---
+[2026-03-23 14:53:31] Starting scrape...
+[2026-03-23 14:53:38] Page loaded, waiting for data...
+[2026-03-23 14:53:54] Error during scrape: Message: 
+
+[2026-03-23 14:53:56] Next check in 3600 seconds...
+[2026-03-23 14:54:03] Monitoring stopped by user
+[2026-03-23 14:54:49] Starting continuous monitoring...
+[2026-03-23 14:54:49] Check interval: 3600 seconds
+[2026-03-23 14:54:49] CPU threshold: 90%
+[2026-03-23 14:54:49] RAM threshold: 90%
+[2026-03-23 14:54:49] 
+--- Check #1 ---
+[2026-03-23 14:54:49] Starting scrape...
+[2026-03-23 14:54:54] Page loaded, waiting for data...
+[2026-03-23 14:54:59] Warning: CPU USAGE not found in page
+[2026-03-23 14:54:59] Warning: RAM USAGE not found in page
+[2026-03-23 14:55:02] Successfully extracted metrics for sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools
+[2026-03-23 14:55:06] Node: sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools
+[2026-03-23 14:55:06] CPU: 0% (Max: 0%)
+[2026-03-23 14:55:06] RAM: 0% (Max: 0%)
+[2026-03-23 14:55:06] Status: IN STOCK
+[2026-03-23 14:55:06] Next check in 3600 seconds...
+[2026-03-23 14:55:39] Monitoring stopped by user
+[2026-03-23 14:55:40] Starting continuous monitoring...
+[2026-03-23 14:55:40] Check interval: 3600 seconds
+[2026-03-23 14:55:40] CPU threshold: 90%
+[2026-03-23 14:55:40] RAM threshold: 90%
+[2026-03-23 14:55:40] 
+--- Check #1 ---
+[2026-03-23 14:55:40] Starting scrape...
+[2026-03-23 14:55:42] Page loaded, waiting for JavaScript rendering...
+[2026-03-23 14:55:46] CPU - Current: 63.17%, Max: 86.6%, Average: 47.95%
+[2026-03-23 14:55:46] RAM - Current: 83.93%, Max: 85.73%, Average: 77.11%
+[2026-03-23 14:55:48] Successfully extracted metrics for sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools
+[2026-03-23 14:55:52] Node: sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools
+[2026-03-23 14:55:52] CPU: 63.17% (Max: 86.6%)
+[2026-03-23 14:55:52] RAM: 83.93% (Max: 85.73%)
+[2026-03-23 14:55:52] Status: IN STOCK
+[2026-03-23 14:55:52] Next check in 3600 seconds...
+[2026-03-23 14:57:16] Monitoring stopped by user
+[2026-03-23 14:57:18] Starting continuous monitoring...
+[2026-03-23 14:57:18] Check interval: 3600 seconds
+[2026-03-23 14:57:18] CPU threshold: 90%
+[2026-03-23 14:57:18] RAM threshold: 90%
+[2026-03-23 14:57:18] 
+--- Check #1 ---
+[2026-03-23 14:57:18] Starting scrape...
+[2026-03-23 14:57:21] Page loaded, waiting for JavaScript rendering...
+[2026-03-23 14:57:24] CPU - Current: 58.46%, Max: 86.6%, Average: 47.96%
+[2026-03-23 14:57:24] RAM - Current: 83.21%, Max: 85.73%, Average: 77.11%
+[2026-03-23 14:57:26] Successfully extracted metrics for sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools
+[2026-03-23 14:57:30] Node: sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools
+[2026-03-23 14:57:30] CPU: 58.46% (Max: 86.6%)
+[2026-03-23 14:57:30] RAM: 83.21% (Max: 85.73%)
+[2026-03-23 14:57:30] Status: IN STOCK
+[2026-03-23 14:57:30] Next check in 3600 seconds...
+[2026-03-23 14:58:03] Monitoring stopped by user
+[2026-03-23 14:58:05] Starting continuous monitoring...
+[2026-03-23 14:58:05] Check interval: 3600 seconds
+[2026-03-23 14:58:05] CPU threshold: 90%
+[2026-03-23 14:58:05] RAM threshold: 90%
+[2026-03-23 14:58:05] 
+--- Check #1 ---
+[2026-03-23 14:58:05] Starting scrape...
+[2026-03-23 14:58:08] Page loaded, selecting 72-hour view...
+[2026-03-23 14:58:11] Clicked 72h button
+[2026-03-23 14:58:16] CPU - Current: 58.46%, Max: 95.75%, Average: 55.22%
+[2026-03-23 14:58:16] RAM - Current: 83.21%, Max: 87.89%, Average: 78.5%
+[2026-03-23 14:58:18] Successfully extracted metrics for sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools (72h view)
+[2026-03-23 14:58:23] Error in monitoring loop: 'charmap' codec can't encode character '\U0001f6a8' in position 22: character maps to <undefined>
+[2026-03-23 14:58:23] Retrying in 60 seconds...
+[2026-03-23 14:59:23] 
+--- Check #2 ---
+[2026-03-23 14:59:23] Starting scrape...
+[2026-03-23 14:59:25] Page loaded, selecting 72-hour view...
+[2026-03-23 14:59:29] Clicked 72h button
+[2026-03-23 14:59:34] CPU - Current: 62.92%, Max: 95.75%, Average: 55.21%
+[2026-03-23 14:59:34] RAM - Current: 83.01%, Max: 87.89%, Average: 78.51%
+[2026-03-23 14:59:36] Successfully extracted metrics for sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools (72h view)
+[2026-03-23 14:59:40] Error in monitoring loop: 'charmap' codec can't encode character '\U0001f6a8' in position 22: character maps to <undefined>
+[2026-03-23 14:59:40] Retrying in 60 seconds...
+[2026-03-23 15:01:10] Starting continuous monitoring...
+[2026-03-23 15:01:10] Monitoring 3 URLs
+[2026-03-23 15:01:10] Check interval: 3600 seconds
+[2026-03-23 15:01:10] CPU threshold: 90%
+[2026-03-23 15:01:10] RAM threshold: 90%
+[2026-03-23 15:01:10] 
+--- Check #1 ---
+[2026-03-23 15:01:10] Starting scrape for: https://status.atbphosting.com/report/uptime/df035459a3513ae69d3414c3e8827e36/
+[2026-03-23 15:01:12] Page loaded, selecting 72-hour view...
+[2026-03-23 15:01:16] Clicked 72h button
+[2026-03-23 15:01:21] CPU - Current: 71.55%, Max: 95.75%, Average: 55.21%
+[2026-03-23 15:01:21] RAM - Current: 83.27%, Max: 87.89%, Average: 78.51%
+[2026-03-23 15:01:23] Successfully extracted metrics for sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools (72h view)
+[2026-03-23 15:01:27] [ALERT] OUT-OF-STOCK NODE DETECTED: sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools
+[2026-03-23 15:01:27] Node: sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools
+[2026-03-23 15:01:27] CPU: 71.55% (Max: 95.75%)
+[2026-03-23 15:01:27] RAM: 83.27% (Max: 87.89%)
+[2026-03-23 15:01:27] [ALERT] ALERTS: CPU exceeded threshold: 95.75%
+[2026-03-23 15:01:27] Status: OUT OF STOCK
+[2026-03-23 15:01:27] --------------------------------------------------
+[2026-03-23 15:01:27] Starting scrape for: https://status.atbphosting.com/report/uptime/fd0aca597ea55cfe810e060f4d288ead/
+[2026-03-23 15:01:29] Page loaded, selecting 72-hour view...
+[2026-03-23 15:01:33] Clicked 72h button
+[2026-03-23 15:01:38] CPU - Current: 32.47%, Max: 85.14%, Average: 37.9%
+[2026-03-23 15:01:38] RAM - Current: 81.01%, Max: 97.33%, Average: 84.33%
+[2026-03-23 15:01:40] Successfully extracted metrics for sgp.premium.plus.shared.2 (Recent History) - Powered by HetrixTools (72h view)
+[2026-03-23 15:01:44] [ALERT] OUT-OF-STOCK NODE DETECTED: sgp.premium.plus.shared.2 (Recent History) - Powered by HetrixTools
+[2026-03-23 15:01:44] Node: sgp.premium.plus.shared.2 (Recent History) - Powered by HetrixTools
+[2026-03-23 15:01:44] CPU: 32.47% (Max: 85.14%)
+[2026-03-23 15:01:44] RAM: 81.01% (Max: 97.33%)
+[2026-03-23 15:01:44] [ALERT] ALERTS: RAM exceeded threshold: 97.33%
+[2026-03-23 15:01:44] Status: OUT OF STOCK
+[2026-03-23 15:01:44] --------------------------------------------------
+[2026-03-23 15:01:44] Starting scrape for: https://status.atbphosting.com/report/uptime/3e462b263ca13b30818fab8aff107a61/
+[2026-03-23 15:01:47] Page loaded, selecting 72-hour view...
+[2026-03-23 15:01:50] Clicked 72h button
+[2026-03-23 15:01:55] CPU - Current: 51.92%, Max: 90.5%, Average: 53.48%
+[2026-03-23 15:01:55] RAM - Current: 74.39%, Max: 84.07%, Average: 73.61%
+[2026-03-23 15:01:57] Successfully extracted metrics for sgp.premium.plus.shared.3 (Recent History) - Powered by HetrixTools (72h view)
+[2026-03-23 15:02:01] [ALERT] OUT-OF-STOCK NODE DETECTED: sgp.premium.plus.shared.3 (Recent History) - Powered by HetrixTools
+[2026-03-23 15:02:01] Node: sgp.premium.plus.shared.3 (Recent History) - Powered by HetrixTools
+[2026-03-23 15:02:01] CPU: 51.92% (Max: 90.5%)
+[2026-03-23 15:02:01] RAM: 74.39% (Max: 84.07%)
+[2026-03-23 15:02:01] [ALERT] ALERTS: CPU exceeded threshold: 90.5%
+[2026-03-23 15:02:01] Status: OUT OF STOCK
+[2026-03-23 15:02:01] --------------------------------------------------
+[2026-03-23 15:02:01] Next check in 3600 seconds...
+[2026-03-23 15:04:02] Monitoring stopped by user
+[2026-03-23 15:04:37] Starting continuous monitoring...
+[2026-03-23 15:04:37] Monitoring 3 URLs
+[2026-03-23 15:04:37] Check interval: 3600 seconds
+[2026-03-23 15:04:37] CPU threshold: 90%
+[2026-03-23 15:04:37] RAM threshold: 90%
+[2026-03-23 15:04:37] 
+--- Check #1 ---
+[2026-03-23 15:04:37] Starting scrape for: https://status.atbphosting.com/report/uptime/df035459a3513ae69d3414c3e8827e36/
+[2026-03-23 15:04:40] Page loaded, selecting 72-hour view...
+[2026-03-23 15:04:44] Clicked 72h button
+[2026-03-23 15:04:48] CPU - Current: 70.36%, Max: 95.75%, Average: 55.2%
+[2026-03-23 15:04:48] RAM - Current: 83.85%, Max: 87.89%, Average: 78.51%
+[2026-03-23 15:04:50] Successfully extracted metrics for sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools (72h view)
+[2026-03-23 15:04:55] Node: sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools
+[2026-03-23 15:04:55] CPU: 70.36% (Max: 95.75%)
+[2026-03-23 15:04:55] RAM: 83.85% (Max: 87.89%)
+[2026-03-23 15:04:55] [ALERT] ALERTS: CPU exceeded threshold: 95.75%
+[2026-03-23 15:04:55] Status: OUT OF STOCK
+[2026-03-23 15:04:55] --------------------------------------------------
+[2026-03-23 15:04:55] Starting scrape for: https://status.atbphosting.com/report/uptime/fd0aca597ea55cfe810e060f4d288ead/
+[2026-03-23 15:04:57] Page loaded, selecting 72-hour view...
+[2026-03-23 15:05:01] Clicked 72h button
+[2026-03-23 15:05:02] Clicked 72h button
+[2026-03-23 15:05:07] CPU - Current: 33.93%, Max: 85.14%, Average: 37.9%
+[2026-03-23 15:05:07] RAM - Current: 80.95%, Max: 97.33%, Average: 84.33%
+[2026-03-23 15:05:09] Successfully extracted metrics for sgp.premium.plus.shared.2 (Recent History) - Powered by HetrixTools (72h view)
+[2026-03-23 15:05:13] Node: sgp.premium.plus.shared.2 (Recent History) - Powered by HetrixTools
+[2026-03-23 15:05:13] CPU: 33.93% (Max: 85.14%)
+[2026-03-23 15:05:13] RAM: 80.95% (Max: 97.33%)
+[2026-03-23 15:05:13] [ALERT] ALERTS: RAM exceeded threshold: 97.33%
+[2026-03-23 15:05:13] Status: OUT OF STOCK
+[2026-03-23 15:05:13] --------------------------------------------------
+[2026-03-23 15:05:13] Starting scrape for: https://status.atbphosting.com/report/uptime/3e462b263ca13b30818fab8aff107a61/
+[2026-03-23 15:05:15] Page loaded, selecting 72-hour view...
+[2026-03-23 15:05:19] Clicked 72h button
+[2026-03-23 15:05:24] CPU - Current: 56.77%, Max: 90.5%, Average: 53.48%
+[2026-03-23 15:05:24] RAM - Current: 73.31%, Max: 84.07%, Average: 73.61%
+[2026-03-23 15:05:26] Successfully extracted metrics for sgp.premium.plus.shared.3 (Recent History) - Powered by HetrixTools (72h view)
+[2026-03-23 15:05:30] Node: sgp.premium.plus.shared.3 (Recent History) - Powered by HetrixTools
+[2026-03-23 15:05:30] CPU: 56.77% (Max: 90.5%)
+[2026-03-23 15:05:30] RAM: 73.31% (Max: 84.07%)
+[2026-03-23 15:05:30] [ALERT] ALERTS: CPU exceeded threshold: 90.5%
+[2026-03-23 15:05:30] Status: OUT OF STOCK
+[2026-03-23 15:05:30] --------------------------------------------------
+[2026-03-23 15:05:30] Next check in 3600 seconds...
+[2026-03-23 15:06:53] Discord notification sent successfully
+[2026-03-23 15:14:10] Monitoring stopped by user

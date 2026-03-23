@@ -1,0 +1,12 @@
+timestamp,node_name,cpu_usage,ram_usage,status
+2026-03-23 14:55:06,sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools,0,0,IN_STOCK
+2026-03-23 14:55:52,sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools,86.6,85.73,IN_STOCK
+2026-03-23 14:57:30,sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools,86.6,85.73,IN_STOCK
+2026-03-23 14:58:23,sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools,95.75,87.89,OUT_OF_STOCK
+2026-03-23 14:59:40,sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools,95.75,87.89,OUT_OF_STOCK
+2026-03-23 15:01:27,sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools,95.75,87.89,OUT_OF_STOCK
+2026-03-23 15:01:44,sgp.premium.plus.shared.2 (Recent History) - Powered by HetrixTools,85.14,97.33,OUT_OF_STOCK
+2026-03-23 15:02:01,sgp.premium.plus.shared.3 (Recent History) - Powered by HetrixTools,90.5,84.07,OUT_OF_STOCK
+2026-03-23 15:04:55,sgp.premium.plus.shared.1 (Recent History) - Powered by HetrixTools,95.75,87.89,OUT_OF_STOCK
+2026-03-23 15:05:13,sgp.premium.plus.shared.2 (Recent History) - Powered by HetrixTools,85.14,97.33,OUT_OF_STOCK
+2026-03-23 15:05:30,sgp.premium.plus.shared.3 (Recent History) - Powered by HetrixTools,90.5,84.07,OUT_OF_STOCK
