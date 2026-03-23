@@ -22,8 +22,6 @@ CONFIG = {
         "https://status.atbphosting.com/report/uptime/3e462b263ca13b30818fab8aff107a61/"
     ],
     "discord_webhook": os.environ.get("DISCORD_WEBHOOK", ""),
-    "discord_resend_minutes": 180,
-    "notify_on_existing_alert": os.environ.get("NOTIFY_ON_EXISTING_ALERT", "false").lower() in ("1", "true", "yes"),
     "headless": os.environ.get("HEADLESS", "false").lower() in ("1", "true", "yes"),
     "check_interval": 3600,  # 1 hour in seconds
     "cpu_threshold": 90,
@@ -39,6 +37,7 @@ class HostingMonitor:
         self.log_file = Path(CONFIG["log_file"])
         self.stock_status_file = self.data_dir / "stock_status.json"
         self.history_file = self.data_dir / "history.csv"
+        self.scan_history_file = self.data_dir / "scan_history.csv"
         self._init_files()
     
     def _init_files(self):
@@ -51,6 +50,23 @@ class HostingMonitor:
             with open(self.history_file, 'w', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(["timestamp", "node_name", "cpu_usage", "ram_usage", "status"])
+
+        if not self.scan_history_file.exists():
+            with open(self.scan_history_file, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    "timestamp",
+                    "node_name",
+                    "cpu_current",
+                    "cpu_average_72h",
+                    "cpu_max_72h",
+                    "ram_current",
+                    "ram_average_72h",
+                    "ram_max_72h",
+                    "cpu_between_scans",
+                    "ram_between_scans",
+                    "status"
+                ])
     
     def log(self, message):
         """Log messages to file and console"""
@@ -61,50 +77,49 @@ class HostingMonitor:
         with open(self.log_file, 'a') as f:
             f.write(log_message + "\n")
     
-    def send_discord_alert(self, node_name, cpu, ram, alerts, url):
-        """Send alert to Discord webhook"""
+    def send_discord_scan_summary(self, scan_results):
+        """Send one combined Discord webhook per scan."""
         try:
             if not CONFIG["discord_webhook"]:
                 self.log("DISCORD_WEBHOOK is not set. Skipping Discord notification.")
                 return
 
-            # Create an embed for Discord
+            out_count = sum(1 for item in scan_results if item["status"] == "OUT_OF_STOCK")
+            if out_count == 0:
+                self.log("No out-of-stock nodes in this scan. Skipping Discord notification.")
+                return
+
             embed = {
-                "title": "[OUT OF STOCK] Node Alert",
-                "description": f"Node: **{node_name}**",
+                "title": "[ATBP] Node Scan Summary",
+                "description": (
+                    f"Nodes scanned: **{len(scan_results)}**\n"
+                    f"Out of stock: **{out_count}**\n"
+                    "Rule: Out of stock is based on **average between scans**, not max."
+                ),
                 "color": 16711680,  # Red color
-                "fields": [
-                    {
-                        "name": "CPU Usage (72h max)",
-                        "value": f"**{cpu}%** ⚠️" if cpu >= CONFIG["cpu_threshold"] else f"{cpu}%",
-                        "inline": True
-                    },
-                    {
-                        "name": "RAM Usage (72h max)",
-                        "value": f"**{ram}%** ⚠️" if ram >= CONFIG["ram_threshold"] else f"{ram}%",
-                        "inline": True
-                    },
-                    {
-                        "name": "Thresholds",
-                        "value": f"CPU: {CONFIG['cpu_threshold']}% | RAM: {CONFIG['ram_threshold']}%",
-                        "inline": False
-                    },
-                    {
-                        "name": "Alerts",
-                        "value": "\n".join([f"🔴 {alert}" for alert in alerts]),
-                        "inline": False
-                    },
-                    {
-                        "name": "Status Page",
-                        "value": f"[View Details]({url})",
-                        "inline": False
-                    }
-                ],
+                "fields": [],
                 "timestamp": datetime.now().isoformat(),
                 "footer": {
                     "text": "ATBPHosting Monitor"
                 }
             }
+
+            for item in scan_results:
+                node_status = "OUT OF STOCK" if item["status"] == "OUT_OF_STOCK" else "IN STOCK"
+                node_icon = "🔴" if item["status"] == "OUT_OF_STOCK" else "🟢"
+                field_value = (
+                    f"{node_icon} **{node_status}**\n"
+                    f"Current CPU/RAM: {item['cpu_current']}% / {item['ram_current']}%\n"
+                    f"72h Avg CPU/RAM: {item['cpu_average_72h']}% / {item['ram_average_72h']}%\n"
+                    f"72h Max CPU/RAM: {item['cpu_max_72h']}% / {item['ram_max_72h']}%\n"
+                    f"Between-Scan Avg CPU/RAM: **{item['cpu_between_scans']}% / {item['ram_between_scans']}%**\n"
+                    f"Source: {item['url']}"
+                )
+                embed["fields"].append({
+                    "name": item["node_name"][:256],
+                    "value": field_value[:1024],
+                    "inline": False
+                })
             
             payload = {
                 "embeds": [embed],
@@ -114,12 +129,12 @@ class HostingMonitor:
             response = requests.post(CONFIG["discord_webhook"], json=payload, timeout=10)
             
             if response.status_code == 204:
-                self.log("Discord notification sent successfully")
+                self.log("Discord scan summary sent successfully")
             else:
-                self.log(f"Failed to send Discord notification: {response.status_code} | body: {response.text}")
+                self.log(f"Failed to send Discord summary: {response.status_code} | body: {response.text}")
         
         except Exception as e:
-            self.log(f"Error sending Discord notification: {e}")
+            self.log(f"Error sending Discord summary: {e}")
 
     def _build_driver(self):
         """Create a configured Chrome driver instance."""
@@ -243,83 +258,130 @@ class HostingMonitor:
             self.log(f"Error parsing {metric_type}: {e}")
             return {"current": 0, "max": 0, "average": 0}
     
-    def check_thresholds(self, metrics):
-        """Check if metrics exceed thresholds"""
+    def calculate_between_scan_average(self, node_name, cpu_current, ram_current):
+        """Calculate average usage between scans for the node using current values."""
+        cpu_values = []
+        ram_values = []
+
+        if self.scan_history_file.exists():
+            with open(self.scan_history_file, 'r', newline='') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row.get("node_name") == node_name:
+                        try:
+                            cpu_values.append(float(row.get("cpu_current", 0) or 0))
+                            ram_values.append(float(row.get("ram_current", 0) or 0))
+                        except ValueError:
+                            pass
+
+        cpu_values.append(cpu_current)
+        ram_values.append(ram_current)
+
+        cpu_between = round(sum(cpu_values) / len(cpu_values), 2)
+        ram_between = round(sum(ram_values) / len(ram_values), 2)
+        return cpu_between, ram_between
+
+    def check_thresholds(self, scan_record):
+        """Check thresholds based on between-scan averages."""
         alerts = []
-        
-        cpu_max = metrics["cpu"]["max"]
-        ram_max = metrics["ram"]["max"]
-        
-        if cpu_max >= CONFIG["cpu_threshold"]:
-            alerts.append(f"CPU exceeded threshold: {cpu_max}%")
-        
-        if ram_max >= CONFIG["ram_threshold"]:
-            alerts.append(f"RAM exceeded threshold: {ram_max}%")
+
+        if scan_record["cpu_between_scans"] >= CONFIG["cpu_threshold"]:
+            alerts.append(f"CPU between-scan average exceeded threshold: {scan_record['cpu_between_scans']}%")
+
+        if scan_record["ram_between_scans"] >= CONFIG["ram_threshold"]:
+            alerts.append(f"RAM between-scan average exceeded threshold: {scan_record['ram_between_scans']}%")
         
         return alerts
-    
-    def save_metrics(self, metrics, alerts):
-        """Save metrics to CSV and update stock status"""
+
+    def build_scan_record(self, metrics):
+        """Build a rich scan record including between-scan averages."""
+        cpu_between, ram_between = self.calculate_between_scan_average(
+            metrics["node_name"],
+            metrics["cpu"]["current"],
+            metrics["ram"]["current"]
+        )
+
+        record = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "node_name": metrics["node_name"],
+            "cpu_current": metrics["cpu"]["current"],
+            "cpu_average_72h": metrics["cpu"]["average"],
+            "cpu_max_72h": metrics["cpu"]["max"],
+            "ram_current": metrics["ram"]["current"],
+            "ram_average_72h": metrics["ram"]["average"],
+            "ram_max_72h": metrics["ram"]["max"],
+            "cpu_between_scans": cpu_between,
+            "ram_between_scans": ram_between,
+            "url": metrics.get("url", "N/A")
+        }
+        alerts = self.check_thresholds(record)
+        record["status"] = "OUT_OF_STOCK" if alerts else "IN_STOCK"
+        record["alerts"] = alerts
+        return record
+
+    def save_metrics(self, scan_record):
+        """Save detailed scan metrics and stock status."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        node = metrics["node_name"]
-        cpu = metrics["cpu"]["max"]
-        ram = metrics["ram"]["max"]
-        status = "OUT_OF_STOCK" if alerts else "IN_STOCK"
+        node = scan_record["node_name"]
+        status = scan_record["status"]
         
-        # Save to CSV
+        # Legacy CSV for backward compatibility
         with open(self.history_file, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([timestamp, node, cpu, ram, status])
-        
-        # Update stock status
-        if alerts:
+            writer.writerow([timestamp, node, scan_record["cpu_max_72h"], scan_record["ram_max_72h"], status])
+
+        # Detailed scan CSV
+        with open(self.scan_history_file, 'a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                scan_record["timestamp"],
+                scan_record["node_name"],
+                scan_record["cpu_current"],
+                scan_record["cpu_average_72h"],
+                scan_record["cpu_max_72h"],
+                scan_record["ram_current"],
+                scan_record["ram_average_72h"],
+                scan_record["ram_max_72h"],
+                scan_record["cpu_between_scans"],
+                scan_record["ram_between_scans"],
+                scan_record["status"]
+            ])
+
+        # Maintain latest out_of_stock snapshot based on current scan rule
+        if self.stock_status_file.exists():
             with open(self.stock_status_file, 'r') as f:
                 stock_data = json.load(f)
-            
+        else:
+            stock_data = {"out_of_stock": []}
+
+        if scan_record["status"] == "OUT_OF_STOCK":
             entry = {
-                "node": node,
-                "timestamp": timestamp,
-                "cpu": cpu,
-                "ram": ram,
-                "alerts": alerts,
-                "detected_at": timestamp,
-                "last_notified_at": timestamp,
-                "note": "Max value in past 72 hours - may have occurred before monitoring started"
+                "node": scan_record["node_name"],
+                "timestamp": scan_record["timestamp"],
+                "cpu_between_scans": scan_record["cpu_between_scans"],
+                "ram_between_scans": scan_record["ram_between_scans"],
+                "cpu_current": scan_record["cpu_current"],
+                "cpu_average_72h": scan_record["cpu_average_72h"],
+                "cpu_max_72h": scan_record["cpu_max_72h"],
+                "ram_current": scan_record["ram_current"],
+                "ram_average_72h": scan_record["ram_average_72h"],
+                "ram_max_72h": scan_record["ram_max_72h"],
+                "alerts": scan_record["alerts"],
+                "note": "Out-of-stock uses average between scans"
             }
-            
-            # Check if this node is already marked as out of stock to avoid spam
-            existing_entry = next((item for item in stock_data["out_of_stock"] if item.get("node") == node), None)
-            
-            if not existing_entry:
+            existing_index = next((i for i, item in enumerate(stock_data["out_of_stock"]) if item.get("node") == scan_record["node_name"]), None)
+            if existing_index is None:
                 stock_data["out_of_stock"].append(entry)
-                self.log(f"[ALERT] OUT-OF-STOCK NODE DETECTED: {node}")
-                
-                # Send Discord notification
-                self.send_discord_alert(node, cpu, ram, alerts, metrics.get("url", "N/A"))
             else:
-                if CONFIG["notify_on_existing_alert"]:
-                    self.log(f"[ALERT] Forced notification for existing out-of-stock node: {node}")
-                    self.send_discord_alert(node, cpu, ram, alerts, metrics.get("url", "N/A"))
-                    existing_entry["last_notified_at"] = timestamp
-                    with open(self.stock_status_file, 'w') as f:
-                        json.dump(stock_data, f, indent=2)
-                    return
+                stock_data["out_of_stock"][existing_index] = entry
+        else:
+            stock_data["out_of_stock"] = [
+                item for item in stock_data["out_of_stock"]
+                if item.get("node") != scan_record["node_name"]
+            ]
 
-                # Re-notify every N minutes while still above threshold.
-                notify_at = existing_entry.get("last_notified_at") or existing_entry.get("timestamp")
-                try:
-                    last_notify_dt = datetime.strptime(notify_at, "%Y-%m-%d %H:%M:%S")
-                    minutes_since = (datetime.now() - last_notify_dt).total_seconds() / 60.0
-                except Exception:
-                    minutes_since = CONFIG["discord_resend_minutes"] + 1
-
-                if minutes_since >= CONFIG["discord_resend_minutes"]:
-                    self.log(f"[ALERT] Re-notifying Discord for node still out of stock: {node}")
-                    self.send_discord_alert(node, cpu, ram, alerts, metrics.get("url", "N/A"))
-                    existing_entry["last_notified_at"] = timestamp
-            
-            with open(self.stock_status_file, 'w') as f:
-                json.dump(stock_data, f, indent=2)
+        with open(self.stock_status_file, 'w') as f:
+            json.dump(stock_data, f, indent=2)
 
     def run_once(self):
         """Run one full monitoring pass across all URLs."""
@@ -328,6 +390,7 @@ class HostingMonitor:
         self.log(f"CPU threshold: {CONFIG['cpu_threshold']}%")
         self.log(f"RAM threshold: {CONFIG['ram_threshold']}%")
 
+        scan_results = []
         driver = None
         try:
             driver = self._build_driver()
@@ -335,20 +398,24 @@ class HostingMonitor:
                 metrics = self.scrape_metrics_with_driver(driver, url)
 
                 if metrics:
-                    alerts = self.check_thresholds(metrics)
-                    self.save_metrics(metrics, alerts)
+                    scan_record = self.build_scan_record(metrics)
+                    self.save_metrics(scan_record)
+                    scan_results.append(scan_record)
 
-                    self.log(f"Node: {metrics['node_name']}")
-                    self.log(f"CPU: {metrics['cpu']['current']}% (Max: {metrics['cpu']['max']}%)")
-                    self.log(f"RAM: {metrics['ram']['current']}% (Max: {metrics['ram']['max']}%)")
+                    self.log(f"Node: {scan_record['node_name']}")
+                    self.log(f"CPU current/avg/max: {scan_record['cpu_current']}% / {scan_record['cpu_average_72h']}% / {scan_record['cpu_max_72h']}%")
+                    self.log(f"RAM current/avg/max: {scan_record['ram_current']}% / {scan_record['ram_average_72h']}% / {scan_record['ram_max_72h']}%")
+                    self.log(f"Between-scan avg CPU/RAM: {scan_record['cpu_between_scans']}% / {scan_record['ram_between_scans']}%")
 
-                    if alerts:
-                        self.log(f"[ALERT] ALERTS: {'; '.join(alerts)}")
+                    if scan_record["alerts"]:
+                        self.log(f"[ALERT] ALERTS: {'; '.join(scan_record['alerts'])}")
                         self.log("Status: OUT OF STOCK")
                     else:
                         self.log("Status: IN STOCK")
 
                     self.log("-" * 50)
+            if scan_results:
+                self.send_discord_scan_summary(scan_results)
         finally:
             if driver:
                 driver.quit()
@@ -366,6 +433,7 @@ class HostingMonitor:
             try:
                 check_count += 1
                 self.log(f"\n--- Check #{check_count} ---")
+                scan_results = []
 
                 driver = self._build_driver()
                 try:
@@ -374,15 +442,17 @@ class HostingMonitor:
                         metrics = self.scrape_metrics_with_driver(driver, url)
                         
                         if metrics:
-                            alerts = self.check_thresholds(metrics)
-                            self.save_metrics(metrics, alerts)
+                            scan_record = self.build_scan_record(metrics)
+                            self.save_metrics(scan_record)
+                            scan_results.append(scan_record)
                             
-                            self.log(f"Node: {metrics['node_name']}")
-                            self.log(f"CPU: {metrics['cpu']['current']}% (Max: {metrics['cpu']['max']}%)")
-                            self.log(f"RAM: {metrics['ram']['current']}% (Max: {metrics['ram']['max']}%)")
+                            self.log(f"Node: {scan_record['node_name']}")
+                            self.log(f"CPU current/avg/max: {scan_record['cpu_current']}% / {scan_record['cpu_average_72h']}% / {scan_record['cpu_max_72h']}%")
+                            self.log(f"RAM current/avg/max: {scan_record['ram_current']}% / {scan_record['ram_average_72h']}% / {scan_record['ram_max_72h']}%")
+                            self.log(f"Between-scan avg CPU/RAM: {scan_record['cpu_between_scans']}% / {scan_record['ram_between_scans']}%")
                             
-                            if alerts:
-                                self.log(f"[ALERT] ALERTS: {'; '.join(alerts)}")
+                            if scan_record["alerts"]:
+                                self.log(f"[ALERT] ALERTS: {'; '.join(scan_record['alerts'])}")
                                 self.log("Status: OUT OF STOCK")
                             else:
                                 self.log("Status: IN STOCK")
@@ -390,6 +460,9 @@ class HostingMonitor:
                             self.log("-" * 50)
                 finally:
                     driver.quit()
+
+                if scan_results:
+                    self.send_discord_scan_summary(scan_results)
                 
                 self.log(f"Next check in {CONFIG['check_interval']} seconds...")
                 time.sleep(CONFIG['check_interval'])
