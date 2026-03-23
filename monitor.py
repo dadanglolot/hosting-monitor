@@ -156,8 +156,17 @@ class HostingMonitor:
     def _build_driver(self):
         """Create a configured Chrome driver instance."""
         chrome_options = Options()
+        chrome_options.set_capability("pageLoadStrategy", "eager")
         chrome_options.add_argument("--start-maximized")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-background-networking")
+        chrome_options.add_argument("--disable-sync")
+        chrome_options.add_argument("--disable-default-apps")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_experimental_option("prefs", {
+            "profile.managed_default_content_settings.images": 2
+        })
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         if CONFIG["headless"]:
             chrome_options.add_argument("--headless=new")
@@ -175,27 +184,32 @@ class HostingMonitor:
 
             self.log("Page loaded, selecting 72-hour view...")
 
-            # Wait for page to load
-            time.sleep(2)
+            # Wait until the page body is ready (faster than fixed sleeps).
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.TAG_NAME, "body"))
+            )
 
             # Find and click the 72h buttons for CPU and RAM
             try:
-                buttons_72h = driver.find_elements(By.XPATH, "//button[contains(text(), '72h')] | //*[contains(text(), '72h')][contains(@role, 'button')]")
+                buttons_72h = driver.find_elements(By.XPATH, "//button[contains(., '72h')] | //*[contains(., '72h')][contains(@role, 'button')]")
+
+                # Limit clicks to first two controls (CPU + RAM) to avoid extra delays.
+                buttons_72h = buttons_72h[:2]
 
                 for button in buttons_72h:
                     try:
                         driver.execute_script("arguments[0].scrollIntoView(true);", button)
-                        time.sleep(0.25)
+                        time.sleep(0.05)
                         button.click()
                         self.log("Clicked 72h button")
-                        time.sleep(0.6)
+                        time.sleep(0.15)
                     except Exception:
                         pass
             except Exception as e:
                 self.log(f"Warning: Could not click 72h buttons: {e}")
 
-            # Wait for page to render metrics
-            time.sleep(1.5)
+            # Small settle delay for chart values after the range switch.
+            time.sleep(0.5)
 
             page_source = driver.page_source
             soup = BeautifulSoup(page_source, 'html.parser')
