@@ -24,7 +24,7 @@ CONFIG = {
     ],
     "discord_webhook": os.environ.get("DISCORD_WEBHOOK", ""),
     "headless": os.environ.get("HEADLESS", "false").lower() in ("1", "true", "yes"),
-    "max_workers": int(os.environ.get("MAX_WORKERS", "3")),
+    "max_workers": int(os.environ.get("MAX_WORKERS", "2")),
     "check_interval": 3600,  # 1 hour in seconds
     "cpu_threshold": 90,
     "ram_threshold": 90,

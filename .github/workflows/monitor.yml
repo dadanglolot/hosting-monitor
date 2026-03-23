@@ -42,7 +42,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           HEADLESS: "true"
-          MAX_WORKERS: "3"
+          MAX_WORKERS: "2"
         run: |
           python monitor.py --once
 
